@@ -19,6 +19,8 @@ image is amd64 only) and has **far fewer known vulnerabilities** than the offici
 
 ## Tags
 
+Images: https://hub.docker.com/r/pompeot1987/mapstore-hardened — `docker pull pompeot1987/mapstore-hardened:dev`
+
 | Tag | Content | Known CVEs |
 |---|---|---|
 | `dev` | MapStore development branch (commit `5613d59`, future 2026.03.00): Spring 7, Tomcat 10.1, H2 2.x, printing included | **0** (5 scanner findings documented as not exploitable in `vex/`) |
