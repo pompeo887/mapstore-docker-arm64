@@ -3,7 +3,7 @@
 # Docker pulls the right architecture (linux/amd64 or linux/arm64) automatically.
 services:
   mapstore:
-    image: ${MAPSTORE_IMAGE:-docker.io/pompeo887/mapstore-hardened:dev}
+    image: ${MAPSTORE_IMAGE:-docker.io/pompeot1987/mapstore-hardened:dev}
     ports:
       # 127.0.0.1 = reachable only from this computer; remove it to expose on the network
       - "127.0.0.1:${MAPSTORE_PORT:-8080}:8080"
