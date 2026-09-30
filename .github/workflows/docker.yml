@@ -43,6 +43,15 @@ jobs:
           push: true
           provenance: mode=max
           sbom: true
+          labels: |
+            org.opencontainers.image.title=MapStore hardened ${{ env.MS_VERSION }}${{ matrix.suffix }}
+            org.opencontainers.image.description=Unofficial multi-arch (amd64/arm64) MapStore ${{ env.MS_VERSION }} image with patched libraries
+            org.opencontainers.image.version=${{ env.MS_VERSION }}${{ matrix.suffix }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.licenses=BSD-2-Clause AND GPL-3.0-only
+            org.opencontainers.image.vendor=pompeo887 (unofficial, not affiliated with GeoSolutions)
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/mapstore-hardened:${{ env.MS_VERSION }}${{ matrix.suffix }}
 
@@ -68,4 +77,14 @@ jobs:
           # when an image has attestations
           provenance: false
           sbom: false
+          # labels shown by Docker Hub under "Source & Build Information"
+          labels: |
+            org.opencontainers.image.title=MapStore hardened (dev)
+            org.opencontainers.image.description=Unofficial multi-arch (amd64/arm64) MapStore master image with patched libraries
+            org.opencontainers.image.version=dev-5613d59
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.licenses=BSD-2-Clause AND GPL-3.0-only
+            org.opencontainers.image.vendor=pompeo887 (unofficial, not affiliated with GeoSolutions)
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/mapstore-hardened:dev
