@@ -2,8 +2,8 @@
   "@context": "https://openvex.dev/ns/v0.2.0",
   "@id": "https://github.com/pompeo887/mapstore-docker-arm64/vex/dev",
   "author": "MapStore hardened image maintainers",
-  "timestamp": "2026-09-30T13:00:00Z",
-  "version": 1,
+  "timestamp": "2026-09-30T14:50:00Z",
+  "version": 2,
   "statements": [
     {
       "vulnerability": {
@@ -82,32 +82,6 @@
       "status": "not_affected",
       "justification": "vulnerable_code_not_present",
       "impact_statement": "The overflow is in the gif2rgb command line utility, which is not installed in the image (only libgif.so is present)."
-    },
-    {
-      "vulnerability": {
-        "name": "CVE-2025-60876"
-      },
-      "products": [
-        {
-          "@id": "pkg:docker/pompeot1987/mapstore-hardened@dev",
-          "subcomponents": [
-            {
-              "@id": "pkg:apk/alpine/busybox@1.37.0-r30"
-            }
-          ]
-        },
-        {
-          "@id": "pkg:docker/mapstore-hardened@dev",
-          "subcomponents": [
-            {
-              "@id": "pkg:apk/alpine/busybox@1.37.0-r30"
-            }
-          ]
-        }
-      ],
-      "status": "not_affected",
-      "justification": "vulnerable_code_cannot_be_controlled_by_adversary",
-      "impact_statement": "The flaw is in the BusyBox wget applet. The image removes the /usr/bin/wget applet link; MapStore and its startup scripts never invoke wget."
     },
     {
       "vulnerability": {

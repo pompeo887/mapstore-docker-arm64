@@ -12,7 +12,7 @@ ARG TOMCAT_SHA512=aa06508300ca137a023b74b8600f2c1b3248412eb85d4fc5e2f337c6c4d377
 FROM --platform=linux/amd64 ${UPSTREAM_IMAGE} AS upstream
 
 # ---------------------------------------------------------------- sorgenti
-FROM --platform=$BUILDPLATFORM alpine:3.23 AS fetch
+FROM --platform=$BUILDPLATFORM alpine:3.24 AS fetch
 RUN apk add --no-cache curl unzip
 ARG TOMCAT_VERSION TOMCAT_SHA512
 WORKDIR /build
@@ -31,7 +31,7 @@ RUN set -eux; \
     apply-overrides overrides/master.list mapstore/WEB-INF/lib overrides/checksums-master.sha256
 
 # ---------------------------------------------------------------- runtime
-FROM alpine:3.23
+FROM alpine:3.24
 ARG UID=20000
 ARG GID=20000
 ARG UNAME=mapstore
@@ -49,7 +49,7 @@ RUN apk upgrade --no-cache \
  && apk add --no-cache openjdk17-jre fontconfig ttf-dejavu bash postgresql17-client \
  && addgroup -g $GID $UNAME \
  && adduser -D -u $UID -G $UNAME $UNAME \
- # non usati da un server headless: tolgono il codice delle CVE busybox-wget e giflib (vedi vex/)
+ # non usati da un server headless: wget non serve, libsplashscreen è l'unico utente di giflib (vedi vex/)
  && rm -f /usr/bin/wget /usr/lib/jvm/java-17-openjdk/lib/libsplashscreen.so
 
 # Dichiarazioni OpenVEX (CVE non sfruttabili in questa immagine), lette da Docker Scout

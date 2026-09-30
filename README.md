@@ -31,7 +31,7 @@ docker pull pompeot1987/mapstore-hardened:dev
 
 | Tag | Contenuto | Vulnerabilità note |
 |---|---|---|
-| `dev` | MapStore ramo di sviluppo (commit `5613d59`, futura 2026.03.00): Spring 7, Tomcat 10.1, H2 2.x, stampa PDF inclusa | **0** (5 segnalazioni dello scanner documentate come non sfruttabili in `vex/`) |
+| `dev` | MapStore ramo di sviluppo (commit `5613d59`, futura 2026.03.00): Spring 7, Tomcat 10.1, H2 2.x, stampa PDF inclusa | **0** (4 segnalazioni dello scanner documentate come non sfruttabili in `vex/`) |
 | `2026.02.01` *(si costruisce dal `Dockerfile`, non ancora su Docker Hub)* | MapStore release 2026.02.01, come l'immagine ufficiale (senza stampa) | 45 |
 | `2026.02.01-printing` *(idem)* | come sopra, con il modulo di stampa MapFish Print | 50 |
 
@@ -102,7 +102,8 @@ Ogni passaggio è stato provato sull'installazione in uso prima di essere pubbli
    Hibernate 7 e H2 2.4, cioè proprio dove stava la maggior parte delle vulnerabilità rimaste.
    Applicando lo stesso metodo a quel codice si è scesi a **5 segnalazioni**, tutte verificate
    come non sfruttabili (codice assente o rimosso dall'immagine) e documentate con un file
-   [OpenVEX](vex/): risultato **0 vulnerabilità**.
+   [OpenVEX](vex/): risultato **0 vulnerabilità**. Con il passaggio ad Alpine 3.24 la
+   segnalazione di busybox è stata corretta direttamente da Alpine, e ne restano 4.
 
 6. **Migrazione del database** da H2 1.3 a H2 2.4 con gli strumenti ufficiali di H2, verificata
    tabella per tabella (stesse righe, stesse mappe, stessa quantità di dati) prima di passare
