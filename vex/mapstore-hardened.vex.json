@@ -1,0 +1,139 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/pompeo887/mapstore-docker-arm64/vex/dev",
+  "author": "MapStore hardened image maintainers",
+  "timestamp": "2026-09-30T13:00:00Z",
+  "version": 1,
+  "statements": [
+    {
+      "vulnerability": {
+        "name": "CVE-2020-15231"
+      },
+      "products": [
+        {
+          "@id": "pkg:docker/pompeo887/mapstore-hardened@dev",
+          "subcomponents": [
+            {
+              "@id": "pkg:maven/org.mapfish.print/print-lib@2.5.0"
+            }
+          ]
+        },
+        {
+          "@id": "pkg:docker/mapstore-hardened@dev",
+          "subcomponents": [
+            {
+              "@id": "pkg:maven/org.mapfish.print/print-lib@2.5.0"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "CVE-2020-15231 is an XSS through the JSONP support of MapFish Print 3.x. print-lib 2.5.x has no JSONP/callback support in its servlet."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2020-15232"
+      },
+      "products": [
+        {
+          "@id": "pkg:docker/pompeo887/mapstore-hardened@dev",
+          "subcomponents": [
+            {
+              "@id": "pkg:maven/org.mapfish.print/print-lib@2.5.0"
+            }
+          ]
+        },
+        {
+          "@id": "pkg:docker/mapstore-hardened@dev",
+          "subcomponents": [
+            {
+              "@id": "pkg:maven/org.mapfish.print/print-lib@2.5.0"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "CVE-2020-15232 is an XXE in the SLD style parser of MapFish Print 3.x. print-lib 2.5.x (GeoSolutions fork of MapFish Print v2) contains no SLD style parser: no SLDParser/StyleFactory usage exists in the jar."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2024-45993"
+      },
+      "products": [
+        {
+          "@id": "pkg:docker/pompeo887/mapstore-hardened@dev",
+          "subcomponents": [
+            {
+              "@id": "pkg:apk/alpine/giflib@5.2.2-r2"
+            }
+          ]
+        },
+        {
+          "@id": "pkg:docker/mapstore-hardened@dev",
+          "subcomponents": [
+            {
+              "@id": "pkg:apk/alpine/giflib@5.2.2-r2"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "The overflow is in the gif2rgb command line utility, which is not installed in the image (only libgif.so is present)."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-60876"
+      },
+      "products": [
+        {
+          "@id": "pkg:docker/pompeo887/mapstore-hardened@dev",
+          "subcomponents": [
+            {
+              "@id": "pkg:apk/alpine/busybox@1.37.0-r30"
+            }
+          ]
+        },
+        {
+          "@id": "pkg:docker/mapstore-hardened@dev",
+          "subcomponents": [
+            {
+              "@id": "pkg:apk/alpine/busybox@1.37.0-r30"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_cannot_be_controlled_by_adversary",
+      "impact_statement": "The flaw is in the BusyBox wget applet. The image removes the /usr/bin/wget applet link; MapStore and its startup scripts never invoke wget."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-23868"
+      },
+      "products": [
+        {
+          "@id": "pkg:docker/pompeo887/mapstore-hardened@dev",
+          "subcomponents": [
+            {
+              "@id": "pkg:apk/alpine/giflib@5.2.2-r2"
+            }
+          ]
+        },
+        {
+          "@id": "pkg:docker/mapstore-hardened@dev",
+          "subcomponents": [
+            {
+              "@id": "pkg:apk/alpine/giflib@5.2.2-r2"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "libgif is linked only by the JVM splash screen library (libsplashscreen.so), which the image removes; the headless Tomcat server never loads it."
+    }
+  ]
+}

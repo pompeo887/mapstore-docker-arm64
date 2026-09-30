@@ -1,0 +1,70 @@
+# MapStore "hardened" basato sul ramo master di upstream (futura 2026.03.00):
+# Spring 7 / Jakarta EE 10 / Hibernate 7 / H2 2.x, quindi Tomcat 10.1.
+# Il WAR (con la stampa gia' inclusa) viene preso dall'immagine ufficiale
+# geosolutionsit/mapstore2:master-dev, fissata per digest.
+#
+# Build: docker build -f Dockerfile.dev -t mapstore-hardened:dev .
+
+ARG UPSTREAM_IMAGE=geosolutionsit/mapstore2@sha256:cca17e720b53f69cab0a55b2aff3600d75365a94871d312faede4e3775680383
+ARG TOMCAT_VERSION=10.1.60
+ARG TOMCAT_SHA512=aa06508300ca137a023b74b8600f2c1b3248412eb85d4fc5e2f337c6c4d3776f4491e272f79856ac541cfab0fc35537111ae4f3cfcd0bbe702c0a3610a61bd04
+
+FROM --platform=linux/amd64 ${UPSTREAM_IMAGE} AS upstream
+
+# ---------------------------------------------------------------- sorgenti
+FROM --platform=$BUILDPLATFORM alpine:3.23 AS fetch
+RUN apk add --no-cache curl unzip
+ARG TOMCAT_VERSION TOMCAT_SHA512
+WORKDIR /build
+RUN set -eux; \
+    curl -fsSL "https://archive.apache.org/dist/tomcat/tomcat-10/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz" -o tomcat.tar.gz; \
+    echo "${TOMCAT_SHA512}  tomcat.tar.gz" | sha512sum -c -; \
+    mkdir tomcat && tar -xzf tomcat.tar.gz -C tomcat --strip-components=1; \
+    rm -rf tomcat/webapps/* tomcat/bin/*.bat tomcat/bin/*.tar.gz tomcat/temp/*
+COPY --from=upstream /usr/local/tomcat/webapps/mapstore.war /build/mapstore.war
+COPY --from=upstream /usr/local/tomcat/conf/server.xml /build/server.xml
+COPY --from=upstream /usr/local/tomcat/docker /build/docker
+COPY overrides/ /build/overrides/
+COPY scripts/apply-overrides.sh /usr/local/bin/apply-overrides
+RUN set -eux; \
+    mkdir mapstore && unzip -q mapstore.war -d mapstore; \
+    apply-overrides overrides/master.list mapstore/WEB-INF/lib overrides/checksums-master.sha256
+
+# ---------------------------------------------------------------- runtime
+FROM alpine:3.23
+ARG UID=20000
+ARG GID=20000
+ARG UNAME=mapstore
+ENV CATALINA_HOME=/usr/local/tomcat \
+    CATALINA_BASE=/usr/local/tomcat \
+    MAPSTORE_WEBAPP_DST=/usr/local/tomcat/webapps \
+    GEOSTORE_OVR_OPT="" \
+    JAVA_OPTS=" -Xms512m -Xmx512m -Ddatadir.location=/usr/local/tomcat/datadir" \
+    TERM=xterm \
+    JAVA_HOME=/usr/lib/jvm/java-17-openjdk \
+    PATH=/usr/local/tomcat/bin:$PATH
+
+# openjdk17-jre (non headless): la stampa inclusa nel WAR usa Java2D e i font.
+RUN apk upgrade --no-cache \
+ && apk add --no-cache openjdk17-jre fontconfig ttf-dejavu bash postgresql17-client \
+ && addgroup -g $GID $UNAME \
+ && adduser -D -u $UID -G $UNAME $UNAME \
+ # non usati da un server headless: tolgono il codice delle CVE busybox-wget e giflib (vedi vex/)
+ && rm -f /usr/bin/wget /usr/lib/jvm/java-17-openjdk/lib/libsplashscreen.so
+
+# Dichiarazioni OpenVEX (CVE non sfruttabili in questa immagine), lette da Docker Scout
+COPY vex/*.vex.json /usr/share/vex/
+
+COPY --from=fetch /build/tomcat /usr/local/tomcat
+COPY --from=fetch /build/server.xml /usr/local/tomcat/conf/server.xml
+COPY --from=fetch /build/docker /usr/local/tomcat/docker/
+RUN cp /usr/local/tomcat/docker/wait-for-postgres.sh /usr/bin/wait-for-postgres \
+ && mkdir -p /usr/local/tomcat/datadir \
+ && chown -R $UID:$GID /usr/local/tomcat
+COPY --from=fetch --chown=20000:20000 /build/mapstore /usr/local/tomcat/webapps/mapstore
+
+WORKDIR /usr/local/tomcat
+VOLUME ["/usr/local/tomcat/datadir"]
+EXPOSE 8080
+USER 20000
+CMD ["catalina.sh", "run"]

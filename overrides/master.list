@@ -1,0 +1,28 @@
+# Sostituzioni jar per il WAR di MapStore master (Spring 7 / Jakarta / Tomcat 10.1).
+# Il WAR upstream contiene piu' versioni della stessa libreria: si tiene solo la piu' recente corretta.
+jackson-annotations-2.21.jar            -
+jackson-core-2.21.3.jar                 -
+jackson-databind-2.21.3.jar             -
+jackson-dataformat-xml-2.21.3.jar       com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.22.2
+jackson-datatype-jakarta-jsonp-2.21.3.jar com.fasterxml.jackson.datatype:jackson-datatype-jakarta-jsonp:2.22.2
+jackson-core-3.1.2.jar                  tools.jackson.core:jackson-core:3.1.4
+json-smart-2.5.0.jar                    net.minidev:json-smart:2.5.2
+accessors-smart-2.5.0.jar               net.minidev:accessors-smart:2.5.2
+httpclient5-5.6.jar                     -
+httpcore5-5.4.jar                       -
+httpcore5-h2-5.4.jar                    -
+bcprov-jdk18on-1.84.jar                 org.bouncycastle:bcprov-jdk18on:1.86
+bcpkix-jdk18on-1.84.jar                 org.bouncycastle:bcpkix-jdk18on:1.86
+bcutil-jdk18on-1.84.jar                 org.bouncycastle:bcutil-jdk18on:1.86
+postgresql-42.7.11.jar                  org.postgresql:postgresql:42.7.13
+nimbus-jose-jwt-9.37.3.jar              com.nimbusds:nimbus-jose-jwt:9.37.4
+log4j-api-2.25.5.jar                    -
+log4j-api-2.26.0.jar                    -
+log4j-core-2.25.5.jar                   -
+log4j-core-2.26.0.jar                   -
+log4j-slf4j-impl-2.26.0.jar             -
+log4j-1.2-api-2.26.0.jar                org.apache.logging.log4j:log4j-1.2-api:2.26.1
+log4j-slf4j2-impl-2.25.5.jar            org.apache.logging.log4j:log4j-slf4j2-impl:2.26.1
+guava-32.0.0-jre.jar                    -
+# print-lib: release ufficiale con tag sorgente (release/2.5.0) al posto dello SNAPSHOT
+print-lib-2.5-SNAPSHOT.jar              org.mapfish.print:print-lib:2.5.0  https://repo.osgeo.org/repository/release

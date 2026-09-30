@@ -1,0 +1,20 @@
+# Example: copy to docker-compose.yml and run `docker compose up -d`.
+# Works on Linux, macOS and Windows (Docker Desktop): all host paths are relative.
+# Docker pulls the right architecture (linux/amd64 or linux/arm64) automatically.
+services:
+  mapstore:
+    image: ${MAPSTORE_IMAGE:-docker.io/pompeo887/mapstore-hardened:dev}
+    ports:
+      # 127.0.0.1 = reachable only from this computer; remove it to expose on the network
+      - "127.0.0.1:${MAPSTORE_PORT:-8080}:8080"
+    environment:
+      - JAVA_OPTS=-Xms512m -Xmx2048m -Ddatadir.location=/usr/local/tomcat/datadir
+    volumes:
+      # data directory: maps database (see example/datadir/geostore-datasource-ovr.properties),
+      # your configs and extensions can live here
+      - ./example/datadir:/usr/local/tomcat/datadir
+      # optional: your own configuration (tokens stay on your machine)
+      # - ./my-config/localConfig.json:/usr/local/tomcat/webapps/mapstore/configs/localConfig.json:ro
+      # optional: MapStore extensions
+      # - ./my-extensions:/usr/local/tomcat/webapps/mapstore/extensions:ro
+    restart: unless-stopped

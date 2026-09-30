@@ -1,0 +1,14 @@
+# never commit local data, databases, tokens or personal configuration
+*.h2.db
+*.mv.db
+example/datadir/*
+!example/datadir/geostore-datasource-ovr.properties
+*.war
+*.zip
+*.jar
+cache/
+test*/
+token
+localConfig*.json
+.env
+.DS_Store
