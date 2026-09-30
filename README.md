@@ -118,14 +118,6 @@ Ogni passaggio è stato provato sull'installazione in uso prima di essere pubbli
    stati ricondotti alla build esatta pubblicata da GeoSolutions, e tutti i sorgenti sono allegati
    alla [release su GitHub](https://github.com/pompeo887/mapstore-docker-arm64/releases).
 
-9. **Controllo di sicurezza prima della pubblicazione.** Repository, cronologia dei commit e
-   immagine sono stati scansionati alla ricerca di token, chiavi, indirizzi email e dati personali
-   (anche con Trivy): nessun dato sensibile.
-
-10. **Pubblicazione.** GitHub Actions costruisce l'immagine per amd64 e arm64 e la pubblica su
-    Docker Hub. L'immagine pubblicata è stata poi riscaricata e verificata: si avvia in 7 secondi,
-    stampa correttamente e la scansione dà 0 vulnerabilità.
-
 ## Costruire l'immagine da soli
 
 ```sh
