@@ -52,11 +52,12 @@ FROM alpine:3.23 AS runtime
 ARG UID=20000
 ARG GID=20000
 ARG UNAME=mapstore
+# JVM: heap proporzionale al limite di memoria del container (vedi "Memoria e dimensionamento" nel README)
 ENV CATALINA_HOME=/usr/local/tomcat \
     CATALINA_BASE=/usr/local/tomcat \
     MAPSTORE_WEBAPP_DST=/usr/local/tomcat/webapps \
     GEOSTORE_OVR_OPT="" \
-    JAVA_OPTS=" -Xms512m -Xmx512m -Ddatadir.location=/usr/local/tomcat/datadir" \
+    JAVA_OPTS="-XX:+UseSerialGC -XX:InitialRAMPercentage=15 -XX:MaxRAMPercentage=60 -XX:MaxMetaspaceSize=160m -XX:ReservedCodeCacheSize=48m -Xss512k -XX:+ExitOnOutOfMemoryError -Ddatadir.location=/usr/local/tomcat/datadir" \
     TERM=xterm \
     JAVA_HOME=/usr/lib/jvm/java-17-openjdk \
     PATH=/usr/local/tomcat/bin:$PATH
@@ -86,6 +87,8 @@ FROM runtime AS mapstore-printing
 # e' nel pacchetto openjdk17-jre (non nella variante headless), piu' i font.
 USER root
 RUN apk add --no-cache openjdk17-jre fontconfig ttf-dejavu
+# la stampa usa piu' heap e piu' classi
+ENV JAVA_OPTS="-XX:+UseSerialGC -XX:InitialRAMPercentage=15 -XX:MaxRAMPercentage=70 -XX:MaxMetaspaceSize=192m -XX:ReservedCodeCacheSize=48m -Xss512k -XX:+ExitOnOutOfMemoryError -Ddatadir.location=/usr/local/tomcat/datadir"
 COPY --from=fetch --chown=20000:20000 /build/mapstore-printing /usr/local/tomcat/webapps/mapstore
 USER 20000
 
