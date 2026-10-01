@@ -48,6 +48,7 @@ Open http://localhost:8080/mapstore (default MapStore users: change the admin pa
 To keep maps across updates, use the `docker-compose.example.yml` in the GitHub repository (stores the database on your disk).
 
 Upgrading from MapStore ≤ 2026.02 (H2 1.3 database)? Convert it once with `scripts/migrate-h2.sh` from the repository — back up first.
+Using your own `localConfig.json` from an older version? Rename the `MetadataExplorer` plugin to `Catalog` (the old name is silently ignored, so the "Add layer" button disappears).
 
 ## Memory sizing
 

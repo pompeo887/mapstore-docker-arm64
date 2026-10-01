@@ -142,6 +142,17 @@ scripts/migrate-h2.sh percorso/di/geostore.h2.db   # crea geostore.mv.db accanto
 Il file originale non viene modificato; se il numero di righe non coincide, lo script si ferma
 senza scrivere nulla.
 
+**Se usi un tuo `localConfig.json`** (montato dall'esterno) scritto per le versioni precedenti:
+il plugin del catalogo si chiama ora solo `Catalog`. Il vecchio nome `MetadataExplorer` non esiste
+più e viene ignorato senza errori, quindi il pulsante "Aggiungi layer" sparisce. Rinominalo
+mantenendo il suo `cfg`. Per controllare gli altri plugin, confronta il tuo file con quello
+predefinito dell'immagine:
+
+```sh
+docker run --rm --entrypoint cat pompeot1987/mapstore-hardened:dev \
+  /usr/local/tomcat/webapps/mapstore/configs/localConfig.json > localConfig.default.json
+```
+
 ## Come è nato questo progetto: il lavoro del 30 settembre 2026
 
 Questo repository è il risultato di una giornata di lavoro su un'installazione MapStore reale
