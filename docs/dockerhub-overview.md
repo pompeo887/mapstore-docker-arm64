@@ -48,6 +48,33 @@ Open http://localhost:8080/mapstore (default MapStore users: change the admin pa
 To keep maps across updates, use the `docker-compose.example.yml` in the GitHub repository (stores the database on your disk).
 
 Upgrading from MapStore ≤ 2026.02 (H2 1.3 database)? Convert it once with `scripts/migrate-h2.sh` from the repository — back up first.
+Using your own `localConfig.json` from an older version? Rename the `MetadataExplorer` plugin to `Catalog` (the old name is silently ignored, so the "Add layer" button disappears).
+
+## Memory sizing
+
+`JAVA_OPTS` makes the Java heap a **percentage of the container memory limit**
+(`MaxRAMPercentage=60`, 70 for the `-printing` variant), with the serial GC, capped
+metaspace/code cache/thread stacks and `ExitOnOutOfMemoryError`. Map layers are fetched by the
+browser and the MapStore proxy streams data, so only PDF printing (included in `dev`) causes
+real peaks on the server.
+
+| Image | Limit | Idle | After 120 requests | Peak while printing (A4, 300 dpi) |
+|---|---|---|---|---|
+| `dev`, previous settings (`-Xms512m -Xmx2048m`) | 3 GB | 621 MB | 663 MB | 1285 MB |
+| `dev` | 768 MB | 338 MB | 367 MB | 479 MB |
+| `mapstore-printing` | 1 GB | 285 MB | 311 MB | 509 MB |
+
+Recommended limits: **512 MB** for a demo without printing, **768 MB – 1 GB** for normal use and
+for `dev` (at 512 MB a burst of 300 dpi prints can get the container OOM-killed),
+**1 – 1.5 GB** with frequent printing. Override `JAVA_OPTS` if needed, keeping
+`-Ddatadir.location=/usr/local/tomcat/datadir`.
+
+- Behind a TLS-inspecting proxy, MapStore's proxy fails with `PKIX path building failed`: import
+  your corporate CA into the container's Java truststore (`keytool -importcert -cacerts`) in a
+  derived image. Never disable certificate validation.
+- The proxy only forwards URLs matching `reqtypeWhitelist` in `proxy.properties` (SSRF
+  protection); add other services explicitly.
+- The `admin` user starts with MapStore's default password: change it before exposing the service.
 
 ## Links
 

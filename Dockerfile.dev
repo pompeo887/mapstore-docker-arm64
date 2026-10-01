@@ -35,11 +35,12 @@ FROM alpine:3.24
 ARG UID=20000
 ARG GID=20000
 ARG UNAME=mapstore
+# JVM: heap proporzionale al limite di memoria del container (vedi "Memoria e dimensionamento" nel README)
 ENV CATALINA_HOME=/usr/local/tomcat \
     CATALINA_BASE=/usr/local/tomcat \
     MAPSTORE_WEBAPP_DST=/usr/local/tomcat/webapps \
     GEOSTORE_OVR_OPT="" \
-    JAVA_OPTS=" -Xms512m -Xmx512m -Ddatadir.location=/usr/local/tomcat/datadir" \
+    JAVA_OPTS="-XX:+UseSerialGC -XX:InitialRAMPercentage=15 -XX:MaxRAMPercentage=60 -XX:MaxMetaspaceSize=160m -XX:ReservedCodeCacheSize=48m -Xss512k -XX:+ExitOnOutOfMemoryError -Ddatadir.location=/usr/local/tomcat/datadir" \
     TERM=xterm \
     JAVA_HOME=/usr/lib/jvm/java-17-openjdk \
     PATH=/usr/local/tomcat/bin:$PATH

@@ -60,6 +60,76 @@ password di amministratore al primo accesso.
   Chiavi e token restano solo nei tuoi file locali.
 - Le porte sono aperte solo su `127.0.0.1`: MapStore non è visibile in rete finché non lo decidi tu.
 
+## Memoria e dimensionamento
+
+L'immagine imposta `JAVA_OPTS` in modo che l'heap Java sia una **percentuale del limite di memoria
+del container** (`-XX:MaxRAMPercentage=60`, 70 nella variante con stampa), invece di un valore
+fisso. Usa anche il GC seriale (meno overhead con heap piccoli e pochi utenti) e limita la memoria
+fuori dall'heap (metaspace, code cache, stack dei thread). Con `-XX:+ExitOnOutOfMemoryError`, se
+la memoria finisce il container termina e Docker lo riavvia pulito.
+
+Perché basta poca RAM:
+- i layer della mappa li scarica il **browser**, non il server;
+- il proxy di MapStore passa i dati **in streaming** (`defaultStreamByteSize=1024` in
+  `proxy.properties`), quindi tanti layer o tile grandi non fanno crescere la RAM del server;
+- l'unico componente lato server con picchi importanti è la **stampa PDF** (MapFish Print), che è
+  inclusa nel tag `dev` e nella variante `-printing`.
+
+Risultati di riferimento (tag `dev`, database H2):
+
+| Configurazione | Limite | RAM a riposo | RAM sotto carico |
+|---|---|---|---|
+| Precedente (`-Xms512m -Xmx2048m`) | 3 GB | 621 MB | 648 MB |
+| Ottimizzata | 512 MB | 324 MB | 347 MB |
+| Ottimizzata + mappa da 300 layer letta 500 volte (25 in parallelo) | 512 MB | – | 380 MB |
+| Ottimizzata + 200 tile da 4,3 MB via proxy (50 in parallelo) | 512 MB | – | 385 MB (picco) |
+
+Verifica sulle tre immagini (120 richieste, poi 10 stampe PDF A4 a 300 dpi con un layer WMS):
+
+| Immagine | Limite | Riposo | Dopo 120 richieste | Picco in stampa |
+|---|---|---|---|---|
+| `mapstore` (2026.02.01) | 512 MB | 318 MB | 342 MB | – (senza stampa) |
+| `mapstore-printing` (2026.02.01) | 1 GB | 285–363 MB | 311–395 MB | 509 MB |
+| `dev` | 768 MB | 338 MB | 367 MB | 479 MB |
+| `dev` | 512 MB | 336–358 MB | 364–380 MB | 508 MB: **in 1 prova su 2 il container è stato terminato per memoria esaurita** |
+| `dev`, configurazione precedente | 3 GB | 621–639 MB | 658–663 MB | 1285 MB |
+
+Limiti consigliati (`mem_limit` in compose, `-m` con `docker run`):
+
+| Uso | Limite |
+|---|---|
+| Demo o pochi utenti, **senza stampa** (target `mapstore`) | 512 MB |
+| Uso normale, e qualsiasi uso del tag `dev` (contiene la stampa) | 768 MB – 1 GB |
+| Variante `-printing` o stampe frequenti ad alta risoluzione | 1 – 1,5 GB |
+
+Per sovrascrivere le opzioni, imposta `JAVA_OPTS` nel compose e mantieni
+`-Ddatadir.location=/usr/local/tomcat/datadir`, per esempio:
+
+```yaml
+    environment:
+      - JAVA_OPTS=-XX:+UseSerialGC -XX:MaxRAMPercentage=65 -XX:+ExitOnOutOfMemoryError -Ddatadir.location=/usr/local/tomcat/datadir
+```
+
+### Note di rete e sicurezza
+
+- **Proxy con ispezione TLS.** Se la rete usa un proxy che ispeziona il TLS, il proxy di MapStore
+  fallisce con `PKIX path building failed`. La soluzione è importare la CA aziendale nel truststore
+  Java del container, per esempio con un `Dockerfile` derivato:
+  ```dockerfile
+  FROM pompeot1987/mapstore-hardened:dev
+  USER root
+  COPY ca-aziendale.crt /tmp/ca.crt
+  RUN keytool -importcert -noprompt -cacerts -storepass changeit -alias ca-aziendale -file /tmp/ca.crt && rm /tmp/ca.crt
+  USER 20000
+  ```
+  Non disattivare mai la verifica dei certificati.
+- **Proxy e SSRF.** Il proxy accetta solo URL che corrispondono alle espressioni `reqtypeWhitelist`
+  di `proxy.properties` (GetCapabilities, GetFeatureInfo, CSW, WMS, WMTS, TMS, WFS, OWS, WPS, 3D
+  Tiles e pochi altri). Gli URL di altri servizi vanno aggiunti in modo esplicito, nel modo più
+  restrittivo possibile.
+- **Utente `admin`.** Al primo avvio ha la password predefinita di MapStore: cambiala prima di
+  qualsiasi esposizione in rete.
+
 ## Aggiornamento a MapStore 2026.03 (cambia il formato del database)
 
 MapStore 2026.03 usa H2 2.x e non legge il database H2 1.3 delle versioni precedenti
@@ -71,6 +141,17 @@ scripts/migrate-h2.sh percorso/di/geostore.h2.db   # crea geostore.mv.db accanto
 
 Il file originale non viene modificato; se il numero di righe non coincide, lo script si ferma
 senza scrivere nulla.
+
+**Se usi un tuo `localConfig.json`** (montato dall'esterno) scritto per le versioni precedenti:
+il plugin del catalogo si chiama ora solo `Catalog`. Il vecchio nome `MetadataExplorer` non esiste
+più e viene ignorato senza errori, quindi il pulsante "Aggiungi layer" sparisce. Rinominalo
+mantenendo il suo `cfg`. Per controllare gli altri plugin, confronta il tuo file con quello
+predefinito dell'immagine:
+
+```sh
+docker run --rm --entrypoint cat pompeot1987/mapstore-hardened:dev \
+  /usr/local/tomcat/webapps/mapstore/configs/localConfig.json > localConfig.default.json
+```
 
 ## Come è nato questo progetto: il lavoro del 30 settembre 2026
 
