@@ -12,14 +12,20 @@
    instead of a full Ubuntu JDK image. Unused tools are removed (see `Dockerfile.dev`).
 4. **Non-root.** Tomcat runs as uid/gid 20000, like the official image.
 
-## Current status (Docker Scout, 2026-09-30)
+## Current status (Docker Scout, 2026-10-02)
 
 | Image | Critical | High | Medium | Low |
 |---|---|---|---|---|
 | Official `geosolutionsit/mapstore2:2026.02.01` (for reference) | 25 | 73 | 118 | 19 |
 | `mapstore-hardened:2026.02.01` (no printing) | 5 | 12 | 22 | 6 |
 | `mapstore-hardened:2026.02.01-printing` | 6 | 12 | 25 | 7 |
-| `mapstore-hardened:dev` (MapStore `master` 5613d59, future 2026.03.00) | 0 | 0 | 0 | 0 (with VEX, see below) |
+| `mapstore-hardened:dev` (MapStore `master` 5613d59, future 2026.03.00) | 1 | 0 | 2 | 1 (unfiltered scan) |
+
+The `dev` image now contains `jackson-core` 2.22.3 and 3.1.7 and `jackson-databind` 2.22.3.
+Docker Scout no longer reports CVE-2026-89425, CVE-2026-89407, CVE-2026-91777 or
+CVE-2026-91776. The remaining critical finding is CVE-2020-15232 on `print-lib` 2.5.0.
+Its VEX statement explains why the affected MapFish Print 3.x SLD parser is absent from this
+MapFish Print 2.x fork; this is a project-maintainer assessment, not an upstream fix.
 
 ### Residual vulnerabilities of the 2026.02.x images
 

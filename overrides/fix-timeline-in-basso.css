@@ -1,0 +1,37 @@
+
+/* ------------------------------------------------------------------
+   Aggiunta locale (01/10/2026).
+   In questo build la barra del tempo viene disegnata in alto a
+   sinistra: copre il pulsante dei livelli e il suo pannello
+   "Impostazioni" si apre verso l'alto, finendo fuori schermo.
+   La si ancora in basso, lasciando liberi il piede della pagina, il
+   selettore degli sfondi e la barra degli strumenti di destra.
+   Chiusa resta una pastiglia; aperta si allarga.
+   NB: niente overflow:hidden qui, altrimenti ritaglia il pannello
+   delle impostazioni.
+   Sorgente: mapstore-configs/fix-timeline-in-basso.css
+   ------------------------------------------------------------------ */
+.timeline-plugin{
+  position: fixed !important;
+  left: 78px !important;
+  bottom: 36px !important;
+  top: auto !important;
+  z-index: 1000;
+  overflow: visible !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+.timeline-plugin:not(:has(.vis-timeline)){
+  right: auto !important;
+  width: max-content !important;
+}
+.timeline-plugin:has(.vis-timeline){
+  right: 74px !important;
+  width: auto !important;
+}
+.timeline-plugin .timeline-plugin-toolbar{
+  background: rgba(255,255,255,.94);
+  overflow: visible !important;
+}
+.timeline-plugin .ms-playback-settings{
+  z-index: 1001;
+}

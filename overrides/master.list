@@ -3,9 +3,11 @@
 jackson-annotations-2.21.jar            -
 jackson-core-2.21.3.jar                 -
 jackson-databind-2.21.3.jar             -
+jackson-core-2.22.2.jar                 com.fasterxml.jackson.core:jackson-core:2.22.3
+jackson-databind-2.22.2.jar             com.fasterxml.jackson.core:jackson-databind:2.22.3
 jackson-dataformat-xml-2.21.3.jar       com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.22.2
 jackson-datatype-jakarta-jsonp-2.21.3.jar com.fasterxml.jackson.datatype:jackson-datatype-jakarta-jsonp:2.22.2
-jackson-core-3.1.2.jar                  tools.jackson.core:jackson-core:3.1.4
+jackson-core-3.1.2.jar                  tools.jackson.core:jackson-core:3.1.7
 json-smart-2.5.0.jar                    net.minidev:json-smart:2.5.2
 accessors-smart-2.5.0.jar               net.minidev:accessors-smart:2.5.2
 httpclient5-5.6.jar                     -

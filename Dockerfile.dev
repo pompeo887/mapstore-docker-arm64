@@ -28,7 +28,9 @@ COPY overrides/ /build/overrides/
 COPY scripts/apply-overrides.sh /usr/local/bin/apply-overrides
 RUN set -eux; \
     mkdir mapstore && unzip -q mapstore.war -d mapstore; \
-    apply-overrides overrides/master.list mapstore/WEB-INF/lib overrides/checksums-master.sha256
+    apply-overrides overrides/master.list mapstore/WEB-INF/lib overrides/checksums-master.sha256; \
+    cp overrides/fix-timeline-in-basso.css mapstore/dist/themes/timeline-fix-20261001.css; \
+    sed -i 's#</head>#<link rel="stylesheet" href="dist/themes/timeline-fix-20261001.css"></head>#' mapstore/index.html
 
 # ---------------------------------------------------------------- runtime
 FROM alpine:3.24

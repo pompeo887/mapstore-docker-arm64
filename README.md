@@ -1,7 +1,7 @@
 # MapStore per Docker — multi-architettura (arm64/amd64) e con meno vulnerabilità
 
 *English summary: unofficial multi-arch (arm64 + amd64) Docker image of MapStore with patched
-libraries and a minimal Alpine base; 0 known CVEs for the `dev` tag (with the VEX in `vex/`).*
+libraries and a minimal Alpine base. See [SECURITY.md](SECURITY.md) for the current scan and VEX analysis.*
 
 Immagine Docker **non ufficiale** di [MapStore](https://github.com/geosolutions-it/MapStore2),
 il WebGIS open source di GeoSolutions. Gira **nativamente su Apple Silicon e su qualsiasi
@@ -9,7 +9,8 @@ processore ARM64**, mentre l'immagine ufficiale esiste solo per amd64, e ha **mo
 vulnerabilità note** dell'immagine ufficiale.
 
 > Non affiliata a GeoSolutions né da loro approvata. "MapStore" è un nome di GeoSolutions Group.
-> L'applicazione MapStore contenuta nell'immagine è quella originale, senza modifiche.
+> Il WAR proviene da MapStore upstream; questa immagine sostituisce alcune librerie e aggiunge una
+> correzione CSS per il pannello delle impostazioni della timeline.
 
 ## In cosa è diversa dall'immagine ufficiale
 
@@ -17,9 +18,9 @@ vulnerabilità note** dell'immagine ufficiale.
 |---|---|---|
 | Architetture | linux/amd64 | linux/amd64 + linux/arm64 |
 | Sistema di base | Ubuntu + JDK 17 completo | Alpine + OpenJDK 17 (solo runtime) |
-| Applicazione MapStore | WAR della release | lo stesso WAR originale, invariato e verificato con checksum |
+| Applicazione MapStore | WAR della release | WAR upstream con librerie sostituite e correzione CSS per la timeline |
 | Librerie vulnerabili | come rilasciate | sostituite con versioni corrette (`overrides/`) |
-| Vulnerabilità note | 235 (2026.02.01) | **0** (`dev`), 45–50 (2026.02.01) — vedi [SECURITY.md](SECURITY.md) |
+| Vulnerabilità note | 235 (2026.02.01) | `dev`: **1 critical, 0 high, 2 medium, 1 low** nel report Scout non filtrato del 2026-10-02; vedi [SECURITY.md](SECURITY.md) |
 
 ## Immagini disponibili
 
@@ -31,7 +32,7 @@ docker pull pompeot1987/mapstore-hardened:dev
 
 | Tag | Contenuto | Vulnerabilità note |
 |---|---|---|
-| `dev` | MapStore ramo di sviluppo (commit `5613d59`, futura 2026.03.00): Spring 7, Tomcat 10.1, H2 2.x, stampa PDF inclusa | **0** (4 segnalazioni dello scanner documentate come non sfruttabili in `vex/`) |
+| `dev` | MapStore ramo di sviluppo (commit `5613d59`, futura 2026.03.00): Spring 7, Tomcat 10.1, H2 2.x, stampa PDF inclusa | **1C / 0H / 2M / 1L** nel report Scout non filtrato; 4 segnalazioni analizzate in `vex/` |
 | `2026.02.01` *(si costruisce dal `Dockerfile`, non ancora su Docker Hub)* | MapStore release 2026.02.01, come l'immagine ufficiale (senza stampa) | 45 |
 | `2026.02.01-printing` *(idem)* | come sopra, con il modulo di stampa MapFish Print | 50 |
 
@@ -181,10 +182,10 @@ Ogni passaggio è stato provato sull'installazione in uso prima di essere pubbli
 
 5. **Controllo del progetto originale.** Il ramo di sviluppo di MapStore è già passato a Spring 7,
    Hibernate 7 e H2 2.4, cioè proprio dove stava la maggior parte delle vulnerabilità rimaste.
-   Applicando lo stesso metodo a quel codice si è scesi a **5 segnalazioni**, tutte verificate
-   come non sfruttabili (codice assente o rimosso dall'immagine) e documentate con un file
-   [OpenVEX](vex/): risultato **0 vulnerabilità**. Con il passaggio ad Alpine 3.24 la
-   segnalazione di busybox è stata corretta direttamente da Alpine, e ne restano 4.
+   Le librerie Jackson sono state aggiornate il 2026-10-02 a `2.22.3` e `3.1.7`: le quattro
+   nuove CVE segnalate da Scout non compaiono più. Restano **4 segnalazioni** nel report non
+   filtrato, analizzate nel file [OpenVEX](vex/). Le dichiarazioni VEX richiedono una verifica
+   indipendente prima di considerare il rischio risolto.
 
 6. **Migrazione del database** da H2 1.3 a H2 2.4 con gli strumenti ufficiali di H2, verificata
    tabella per tabella (stesse righe, stesse mappe, stessa quantità di dati) prima di passare
