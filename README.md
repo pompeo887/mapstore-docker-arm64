@@ -1,44 +1,19 @@
-# MapStore per Docker — multi-architettura (arm64/amd64) e con meno vulnerabilità
+# MapStore Docker per ARM64 e AMD64
 
-*English summary: unofficial multi-arch (arm64 + amd64) Docker image of MapStore with patched
-libraries and a minimal Alpine base. See [SECURITY.md](SECURITY.md) for the current scan and VEX analysis.*
+Immagine **non ufficiale** di [MapStore](https://github.com/geosolutions-it/MapStore2),
+utilizzabile nativamente su Apple Silicon e su Linux ARM64 o AMD64. Usa Alpine, Java 17 e
+Tomcat; il WAR proviene da MapStore upstream. Alcune librerie sono sostituite con versioni
+corrette e il tag `dev` include una correzione CSS per la timeline.
 
-Immagine Docker **non ufficiale** di [MapStore](https://github.com/geosolutions-it/MapStore2),
-il WebGIS open source di GeoSolutions. Gira **nativamente su Apple Silicon e su qualsiasi
-processore ARM64**, mentre l'immagine ufficiale esiste solo per amd64, e ha **molte meno
-vulnerabilità note** dell'immagine ufficiale.
+Docker Hub: [pompeot1987/mapstore-hardened](https://hub.docker.com/r/pompeot1987/mapstore-hardened)
 
-> Non affiliata a GeoSolutions né da loro approvata. "MapStore" è un nome di GeoSolutions Group.
-> Il WAR proviene da MapStore upstream; questa immagine sostituisce alcune librerie e aggiunge una
-> correzione CSS per il pannello delle impostazioni della timeline.
+| Tag | Contenuto |
+| --- | --- |
+| `dev` | MapStore master (`5613d59`, futura 2026.03), stampa PDF inclusa; ARM64 e AMD64 |
+| `2026.02.01` | Release stabile, senza stampa; solo build locale per ora |
+| `2026.02.01-printing` | Release stabile con stampa; solo build locale per ora |
 
-## In cosa è diversa dall'immagine ufficiale
-
-| | Ufficiale `geosolutionsit/mapstore2` | Questa immagine |
-|---|---|---|
-| Architetture | linux/amd64 | linux/amd64 + linux/arm64 |
-| Sistema di base | Ubuntu + JDK 17 completo | Alpine + OpenJDK 17 (solo runtime) |
-| Applicazione MapStore | WAR della release | WAR upstream con librerie sostituite e correzione CSS per la timeline |
-| Librerie vulnerabili | come rilasciate | sostituite con versioni corrette (`overrides/`) |
-| Vulnerabilità note | 235 (2026.02.01) | `dev`: **1 critical, 0 high, 2 medium, 1 low** nel report Scout non filtrato del 2026-10-02; vedi [SECURITY.md](SECURITY.md) |
-
-## Immagini disponibili
-
-Docker Hub: https://hub.docker.com/r/pompeot1987/mapstore-hardened
-
-```sh
-docker pull pompeot1987/mapstore-hardened:dev
-```
-
-| Tag | Contenuto | Vulnerabilità note |
-|---|---|---|
-| `dev` | MapStore ramo di sviluppo (commit `5613d59`, futura 2026.03.00): Spring 7, Tomcat 10.1, H2 2.x, stampa PDF inclusa | **1C / 0H / 2M / 1L** nel report Scout non filtrato; 4 segnalazioni analizzate in `vex/` |
-| `2026.02.01` *(si costruisce dal `Dockerfile`, non ancora su Docker Hub)* | MapStore release 2026.02.01, come l'immagine ufficiale (senza stampa) | 45 |
-| `2026.02.01-printing` *(idem)* | come sopra, con il modulo di stampa MapFish Print | 50 |
-
-`dev` è quella con meno vulnerabilità, ma è **codice di sviluppo** non ancora rilasciato da
-GeoSolutions: può contenere difetti (per esempio salti della vista durante lo zoom in 3D,
-riprodotti anche sull'immagine ufficiale `master-dev`). Per la massima stabilità usa una release.
+Il tag `dev` usa codice upstream di sviluppo. Il progetto non è affiliato a GeoSolutions.
 
 ## Avvio rapido
 
@@ -50,187 +25,42 @@ curl -o example/datadir/geostore-datasource-ovr.properties \
 docker compose -f docker-compose.example.yml up -d
 ```
 
-Poi apri http://localhost:8080/mapstore. Valgono gli utenti predefiniti di MapStore: cambia la
-password di amministratore al primo accesso.
+Apri <http://localhost:8080/mapstore>. Il database resta in `./example/datadir` anche dopo
+l'aggiornamento dell'immagine. Cambia la password dell'utente amministratore al primo accesso.
+Per il tag `dev` assegna almeno 1 GB di memoria al container se usi la stampa PDF. Le porte
+dell'esempio sono accessibili solo da `127.0.0.1`.
 
-- Funziona su Linux, macOS e Windows (Docker Desktop): Docker scarica da solo la versione giusta
-  per il tuo processore.
-- Il database delle mappe viene salvato in `./example/datadir` sul tuo computer, quindi resta
-  anche quando aggiorni l'immagine.
-- Puoi montare il tuo `localConfig.json` e le tue estensioni (vedi i commenti nel file compose).
-  Chiavi e token restano solo nei tuoi file locali.
-- Le porte sono aperte solo su `127.0.0.1`: MapStore non è visibile in rete finché non lo decidi tu.
+## Sicurezza
 
-## Memoria e dimensionamento
+Nella scansione Docker Scout del **2 ottobre 2026**, il tag `dev` aggiornato presenta
+**1 CRITICAL, 0 HIGH, 2 MEDIUM e 1 LOW** nel report non filtrato. Le quattro nuove CVE di
+Jackson (`CVE-2026-89425`, `CVE-2026-89407`, `CVE-2026-91777`, `CVE-2026-91776`) non
+compaiono più dopo l'aggiornamento a Jackson `2.22.3` e `3.1.7`. La segnalazione critica
+residua riguarda `print-lib 2.5.0`; l'analisi e le dichiarazioni OpenVEX sono in
+[SECURITY.md](SECURITY.md). Le dichiarazioni VEX sono valutazioni del progetto, non patch.
 
-L'immagine imposta `JAVA_OPTS` in modo che l'heap Java sia una **percentuale del limite di memoria
-del container** (`-XX:MaxRAMPercentage=60`, 70 nella variante con stampa), invece di un valore
-fisso. Usa anche il GC seriale (meno overhead con heap piccoli e pochi utenti) e limita la memoria
-fuori dall'heap (metaspace, code cache, stack dei thread). Con `-XX:+ExitOnOutOfMemoryError`, se
-la memoria finisce il container termina e Docker lo riavvia pulito.
+## Aggiornamento da MapStore precedente
 
-Perché basta poca RAM:
-- i layer della mappa li scarica il **browser**, non il server;
-- il proxy di MapStore passa i dati **in streaming** (`defaultStreamByteSize=1024` in
-  `proxy.properties`), quindi tanti layer o tile grandi non fanno crescere la RAM del server;
-- l'unico componente lato server con picchi importanti è la **stampa PDF** (MapFish Print), che è
-  inclusa nel tag `dev` e nella variante `-printing`.
-
-Risultati di riferimento (tag `dev`, database H2):
-
-| Configurazione | Limite | RAM a riposo | RAM sotto carico |
-|---|---|---|---|
-| Precedente (`-Xms512m -Xmx2048m`) | 3 GB | 621 MB | 648 MB |
-| Ottimizzata | 512 MB | 324 MB | 347 MB |
-| Ottimizzata + mappa da 300 layer letta 500 volte (25 in parallelo) | 512 MB | – | 380 MB |
-| Ottimizzata + 200 tile da 4,3 MB via proxy (50 in parallelo) | 512 MB | – | 385 MB (picco) |
-
-Verifica sulle tre immagini (120 richieste, poi 10 stampe PDF A4 a 300 dpi con un layer WMS):
-
-| Immagine | Limite | Riposo | Dopo 120 richieste | Picco in stampa |
-|---|---|---|---|---|
-| `mapstore` (2026.02.01) | 512 MB | 318 MB | 342 MB | – (senza stampa) |
-| `mapstore-printing` (2026.02.01) | 1 GB | 285–363 MB | 311–395 MB | 509 MB |
-| `dev` | 768 MB | 338 MB | 367 MB | 479 MB |
-| `dev` | 512 MB | 336–358 MB | 364–380 MB | 508 MB: **in 1 prova su 2 il container è stato terminato per memoria esaurita** |
-| `dev`, configurazione precedente | 3 GB | 621–639 MB | 658–663 MB | 1285 MB |
-
-Limiti consigliati (`mem_limit` in compose, `-m` con `docker run`):
-
-| Uso | Limite |
-|---|---|
-| Demo o pochi utenti, **senza stampa** (target `mapstore`) | 512 MB |
-| Uso normale, e qualsiasi uso del tag `dev` (contiene la stampa) | 768 MB – 1 GB |
-| Variante `-printing` o stampe frequenti ad alta risoluzione | 1 – 1,5 GB |
-
-Per sovrascrivere le opzioni, imposta `JAVA_OPTS` nel compose e mantieni
-`-Ddatadir.location=/usr/local/tomcat/datadir`, per esempio:
-
-```yaml
-    environment:
-      - JAVA_OPTS=-XX:+UseSerialGC -XX:MaxRAMPercentage=65 -XX:+ExitOnOutOfMemoryError -Ddatadir.location=/usr/local/tomcat/datadir
-```
-
-### Note di rete e sicurezza
-
-- **Proxy con ispezione TLS.** Se la rete usa un proxy che ispeziona il TLS, il proxy di MapStore
-  fallisce con `PKIX path building failed`. La soluzione è importare la CA aziendale nel truststore
-  Java del container, per esempio con un `Dockerfile` derivato:
-  ```dockerfile
-  FROM pompeot1987/mapstore-hardened:dev
-  USER root
-  COPY ca-aziendale.crt /tmp/ca.crt
-  RUN keytool -importcert -noprompt -cacerts -storepass changeit -alias ca-aziendale -file /tmp/ca.crt && rm /tmp/ca.crt
-  USER 20000
-  ```
-  Non disattivare mai la verifica dei certificati.
-- **Proxy e SSRF.** Il proxy accetta solo URL che corrispondono alle espressioni `reqtypeWhitelist`
-  di `proxy.properties` (GetCapabilities, GetFeatureInfo, CSW, WMS, WMTS, TMS, WFS, OWS, WPS, 3D
-  Tiles e pochi altri). Gli URL di altri servizi vanno aggiunti in modo esplicito, nel modo più
-  restrittivo possibile.
-- **Utente `admin`.** Al primo avvio ha la password predefinita di MapStore: cambiala prima di
-  qualsiasi esposizione in rete.
-
-## Aggiornamento a MapStore 2026.03 (cambia il formato del database)
-
-MapStore 2026.03 usa H2 2.x e non legge il database H2 1.3 delle versioni precedenti
-(`geostore.h2.db`). Va convertito una volta sola, **dopo aver fatto un backup**:
+MapStore 2026.03 usa H2 2.x. Prima di avviare `dev` con un database H2 1.3, fai una copia
+di sicurezza e convertilo:
 
 ```sh
-scripts/migrate-h2.sh percorso/di/geostore.h2.db   # crea geostore.mv.db accanto e confronta le righe
+scripts/migrate-h2.sh percorso/di/geostore.h2.db
 ```
 
-Il file originale non viene modificato; se il numero di righe non coincide, lo script si ferma
-senza scrivere nulla.
+Se monti un vecchio `localConfig.json`, rinomina il plugin `MetadataExplorer` in `Catalog`
+conservando il suo `cfg`; altrimenti il pulsante «Aggiungi layer» può sparire.
 
-**Se usi un tuo `localConfig.json`** (montato dall'esterno) scritto per le versioni precedenti:
-il plugin del catalogo si chiama ora solo `Catalog`. Il vecchio nome `MetadataExplorer` non esiste
-più e viene ignorato senza errori, quindi il pulsante "Aggiungi layer" sparisce. Rinominalo
-mantenendo il suo `cfg`. Per controllare gli altri plugin, confronta il tuo file con quello
-predefinito dell'immagine:
+## Build e documentazione
 
 ```sh
-docker run --rm --entrypoint cat pompeot1987/mapstore-hardened:dev \
-  /usr/local/tomcat/webapps/mapstore/configs/localConfig.json > localConfig.default.json
+docker build -f Dockerfile.dev -t mapstore-hardened:dev .
+docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile.dev \
+  -t <utente>/mapstore-hardened:dev --push .
 ```
 
-## Come è nato questo progetto: il lavoro del 30 settembre 2026
-
-Questo repository è il risultato di una giornata di lavoro su un'installazione MapStore reale
-(con mappe 2D/3D, estensioni personalizzate e stampa PDF) su un **Mac mini con chip Apple M4**.
-Ogni passaggio è stato provato sull'installazione in uso prima di essere pubblicato.
-
-1. **Il punto di partenza.** MapStore e GeoServer giravano in **emulazione amd64**, perché
-   l'immagine ufficiale di MapStore esiste solo per processori Intel/AMD. Funzionava, ma lento.
-
-2. **Versione nativa arm64.** MapStore è un'applicazione Java, indipendente dal processore: è
-   bastato rimetterla su una base Tomcat/Java multi-architettura. Risultati misurati:
-   - avvio di MapStore da 13,6 a **5,4 s**, di GeoServer da 22,8 a **6,2 s**;
-   - memoria di MapStore da 1,12 a **0,74 GB**, di GeoServer da 1,02 a **0,62 GB**.
-
-3. **Analisi delle vulnerabilità** con Docker Scout (e Gordon in Docker Desktop): l'immagine
-   ufficiale 2026.02.01 ha **235 CVE**, la prima versione arm64 ne aveva 121. Ogni CVE è stata
-   ricondotta alla libreria da cui proviene e verificata, distinguendo quelle realmente sfruttabili
-   da quelle che non lo sono in questa installazione.
-
-4. **Immagine "hardened" della release 2026.02.01.** Stesso WAR ufficiale, 33 librerie sostituite
-   con versioni corrette della stessa serie (ognuna con checksum), base Alpine: **45 CVE** (50 con
-   la stampa). Verifiche fatte: le risposte delle API sono identiche byte per byte a quelle
-   dell'immagine precedente e la stampa PDF produce lo stesso risultato. Durante i test è emerso un
-   difetto reale (la stampa falliva perché il Java minimale di Alpine non include la libreria dei
-   font), subito corretto.
-
-5. **Controllo del progetto originale.** Il ramo di sviluppo di MapStore è già passato a Spring 7,
-   Hibernate 7 e H2 2.4, cioè proprio dove stava la maggior parte delle vulnerabilità rimaste.
-   Le librerie Jackson sono state aggiornate il 2026-10-02 a `2.22.3` e `3.1.7`: le quattro
-   nuove CVE segnalate da Scout non compaiono più. Restano **4 segnalazioni** nel report non
-   filtrato, analizzate nel file [OpenVEX](vex/). Le dichiarazioni VEX richiedono una verifica
-   indipendente prima di considerare il rischio risolto.
-
-6. **Migrazione del database** da H2 1.3 a H2 2.4 con gli strumenti ufficiali di H2, verificata
-   tabella per tabella (stesse righe, stesse mappe, stessa quantità di dati) prima di passare
-   l'installazione in uso alla nuova versione. Il procedimento è diventato `scripts/migrate-h2.sh`.
-
-7. **Distinguere i difetti nostri da quelli di sviluppo.** Un salto della vista durante lo zoom in
-   3D è stato confrontato con l'immagine ufficiale `master-dev` senza modifiche: si presenta anche
-   lì, e i 790 file del frontend sono identici byte per byte. Non dipende da questa immagine.
-
-8. **Licenze.** MapStore è BSD, ma GeoStore e il modulo di stampa sono GPL-3.0: chi distribuisce
-   l'immagine deve rendere disponibile il sorgente esatto. Per questo lo snapshot di stampa è stato
-   sostituito con la release `print-lib 2.5.0` (235 classi identiche), i jar di GeoStore sono
-   stati ricondotti alla build esatta pubblicata da GeoSolutions, e tutti i sorgenti sono allegati
-   alla [release su GitHub](https://github.com/pompeo887/mapstore-docker-arm64/releases).
-
-## Costruire l'immagine da soli
-
-```sh
-docker build --target mapstore          -t mapstore-hardened:2026.02.01 .
-docker build --target mapstore-printing -t mapstore-hardened:2026.02.01-printing .
-docker build -f Dockerfile.dev          -t mapstore-hardened:dev .
-# multi-architettura
-docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile.dev -t <tuo-utente>/mapstore-hardened:dev --push .
-```
-
-Struttura del repository:
-
-| Percorso | Contenuto |
-|---|---|
-| `Dockerfile` | release 2026.02.01 (target `mapstore` e `mapstore-printing`) |
-| `Dockerfile.dev` | ramo di sviluppo di MapStore (tag `dev`) |
-| `overrides/` | elenco delle librerie sostituite e relativi checksum SHA-256 |
-| `vex/` | dichiarazioni OpenVEX delle segnalazioni non sfruttabili |
-| `scripts/` | sostituzione dei jar, migrazione H2, download dei sorgenti GPL |
-| `docker/`, `binary/` | file originali del repository MapStore (esempi e configurazione Tomcat) |
-
-## Licenze
-
-I file di questo repository sono rilasciati con licenza BSD 2-Clause (vedi [LICENSE](LICENSE)).
-Le immagini contengono software di terze parti con le proprie licenze, tra cui componenti
-GPL-3.0 (GeoStore, MapFish Print): l'elenco e i link ai sorgenti sono in [NOTICE.md](NOTICE.md).
-
-## Crediti
-
-Progetto di **pompeo887**, realizzato con l'assistenza di Claude (Anthropic). pompeo887 ha
-guidato il lavoro, revisionato le modifiche e verificato che tutto funzionasse sulla propria
-installazione, e mantiene questo repository.
-MapStore è sviluppato da [GeoSolutions](https://www.geosolutionsgroup.com/).
+Il [workflow GitHub](.github/workflows/docker.yml) pubblica il tag `dev` su Docker Hub
+quando viene inviato un tag Git che inizia con `dev`. Per librerie, checksum e valutazione
+delle CVE vedi [SECURITY.md](SECURITY.md); per sorgenti e licenze vedi
+[NOTICE.md](NOTICE.md). Il codice di questo repository è BSD 2-Clause
+([LICENSE](LICENSE)).
